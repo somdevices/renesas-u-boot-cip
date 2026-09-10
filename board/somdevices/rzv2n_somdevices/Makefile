@@ -1,5 +1,5 @@
 #
-# board/renesas/rzv2n-dev/Makefile
+# board/somdevices/rzv2n-somdevices/Makefile
 #
 # Copyright (C) 2023 Renesas Electronics Corporation
 #
@@ -7,7 +7,7 @@
 #
 
 ifdef CONFIG_SPL_BUILD
-obj-y	:= ../rcar-common/gen3-spl.o
+obj-y	:= ../../renesas/rcar-common/gen3-spl.o
 else
-obj-y	:= rzv2n-dev.o ../rcar-common/v2-common.o
+obj-y	:= rzv2n-somdevices.o ../../renesas/rcar-common/v2-common.o
 endif

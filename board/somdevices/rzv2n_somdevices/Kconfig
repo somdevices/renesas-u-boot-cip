@@ -1,32 +1,16 @@
-if TARGET_RZV2N_DEV
+if TARGET_RZV2N_SOMDEVICES
 
 config SYS_SOC
 	default "renesas"
 
 config SYS_BOARD
-	default "rzv2n-dev"
+	default "rzv2n-somdevices"
 
 config SYS_VENDOR
-	default "renesas"
+	default "somdevices"
 
 config SYS_CONFIG_NAME
-	default "rzv2n-dev"
-
-endif
-
-if TARGET_RZV2N_EVK
-
-config SYS_SOC
-	default "renesas"
-
-config SYS_BOARD
-	default "rzv2n-dev"
-
-config SYS_VENDOR
-	default "renesas"
-
-config SYS_CONFIG_NAME
-	default "rzv2n-evk"
+	default "rzv2n-somdevices"
 
 endif
 

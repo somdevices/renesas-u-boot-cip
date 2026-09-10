@@ -94,20 +94,10 @@ void s_init(void)
 {
 	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
 
-#if CONFIG_TARGET_RZV2N_DEV
-	/* PA5,PA4 port	*/
-	*(volatile u8 *)PMC_2A   &= ~(0x03 << 4);
-	/* PA5=1,PA4=0 */
-	*(volatile u8 *)P_2A      = (*(volatile u32 *)P_2A  & ~(0x03 << 4)) | (0x01 << 5);
-	/* PA5,PA4 output */
-	*(volatile u16 *)PM_2A    = (*(volatile u32 *)PM_2A & ~(0x0f << 8)) | (0x0c << 8);
-#endif
-#if CONFIG_TARGET_RZV2N_EVK
 	/* SD1  */
 	*(volatile u8 *)PMC_2A   &= ~(0x03 << 2);/* PA3,PA2 port */
 	*(volatile u8 *)P_2A      = (*(volatile u32 *)P_2A  & ~(0x03<<2)) | (0x01 <<3); /* PA3=1,PA2=0		*/
 	*(volatile u16 *)PM_2A    = (*(volatile u32 *)PM_2A & ~(0x0f<<4)) | (0x0a <<4); /* PA3,PA2 output	*/
-#endif
 	/* I2C8 */
 	*(volatile u32 *)PFC_20  = (*(volatile u32 *)PFC_20 & 0x00FFFFFF) | (0x01 << 28) | (0x01 << 24);
 	*(volatile u8 *)PMC_20   |= (0x03) << 6;	/* P07,P06 multiplexed function	*/
@@ -131,14 +121,37 @@ void s_init(void)
 	*(volatile u32 *)(ICU_IPTSR_REG) = 0;
 
 	/* Reset ETH0 */
-	*(volatile u32 *)(CPG_RESET_ETH) = 0x00010000;
-	while ((*(volatile u32 *)(CPG_RESETMON_ETH) & 0x00000002) == 0x0)
-		;
+	/* Set P9_6 as ETH0 reset GPIO */
+	/* Control mode (GPIO function) */
+	(*(volatile u32 *)PFC_PMC29) &= ~(0x1u << 6);
 
-	/* Release reset ETH0 */
-	*(volatile u32 *)(CPG_RESET_ETH) = 0x00010001;
-	while ((*(volatile u32 *)(CPG_RESETMON_ETH) & 0x00000002) != 0x0)
-		;
+	/* Set PM register for Output */
+	(*(volatile u32 *)PFC_PM29) &= ~(0x3u << 12);
+
+	/* Drive RESET LOW (Assert Ethernet PHY Reset) */
+	(*(volatile u32 *)PFC_P29) &= ~(0x1u << 6);
+
+	/* Hold in reset (e.g., 10-50 ms) */
+	mdelay(20);
+
+	/* Drive RESET HIGH (De-assert Ethernet PHY Reset) */
+	(*(volatile u32 *)PFC_P29) |= (0x1u << 6);
+
+	/* Set P6_1 as ETH1 reset GPIO */
+	/* Control mode (GPIO function) */
+	(*(volatile u32 *)PFC_PMC26) &= ~(0x1u << 1);
+
+	/* Set PM register for Output */
+	(*(volatile u32 *)PFC_PM26) &= ~(0x3u << 2);
+
+	/* Drive RESET LOW (Assert Ethernet PHY Reset) */
+	(*(volatile u32 *)PFC_P29) &= ~(0x1u << 1);
+
+	/* Hold in reset (e.g., 10-50 ms) */
+	mdelay(20);
+
+	/* Drive RESET HIGH (De-assert Ethernet PHY Reset) */
+	(*(volatile u32 *)PFC_P29) |= (0x1u << 1);
 
 	/* Disable SMUX2_GBE0_RXCLK and SMUX2_GBE1_RXCLK */
 	*(volatile u32 *) (CPG_SSEL0) = 0x10000000;
@@ -203,36 +216,18 @@ static void board_usb_init(void)
 	/* Disable GPIO Write Protect */
 	(*(volatile u32 *)PFC_PWPR) |= (0x1u << 6);
 
-#if CONFIG_TARGET_RZV2N_DEV
 	/* Set P6_0 as Func.15 for VBUSEN */
 	(*(volatile u32 *)PFC_PMC26) |= (0x1u << 0);
 	(*(volatile u32 *)PFC_PFC26) &= ~(0xF << 0);
 	/* Function mode 15 */
 	(*(volatile u32 *)PFC_PFC26) |= (0xF << 0);
 
-	/* Set P6_1 as Func.15 for OVRCUR */
-	(*(volatile u32 *)PFC_PMC26) |= (0x1u << 1);
-	(*(volatile u32 *)PFC_PFC26) &= ~(0xF << 4);
-	/* Function mode 15 */
-	(*(volatile u32 *)PFC_PFC26) |= (0xF << 4);
-#endif /* CONFIG_TARGET_RZV2N_DEV */
-
-#if CONFIG_TARGET_RZV2N_EVK
-        /* Set P9_5 as Func.14 for VBUSEN */
-        /* Control mode (multiplexed function) */
-        (*(volatile u32 *)PFC_PMC29) |= (0x1u << 5);
-        (*(volatile u32 *)PFC_PFC29) &= ~(0xF << 20);
-        /* Function mode 14 */
-        (*(volatile u32 *)PFC_PFC29) |= (0x0E << 20);
-
-        /* Set P9_6 as Func.14 for OVRCUR */
-        /* Control mode (multiplexed function) */
-        (*(volatile u32 *)PFC_PMC29) |= (0x1u << 6);
-        (*(volatile u32 *)PFC_PFC29) &= ~(0xF << 24);
-        /* Function mode 14 */
-        (*(volatile u32 *)PFC_PFC29) |= (0x0E << 24);
-
-#endif /* CONFIG_TARGET_RZV2N_EVK */
+	/* Set P9_5 as Func.14 for VBUSEN */
+	/* Control mode (multiplexed function) */
+	(*(volatile u32 *)PFC_PMC29) |= (0x1u << 5);
+	(*(volatile u32 *)PFC_PFC29) &= ~(0xF << 20);
+	/* Function mode 14 */
+	(*(volatile u32 *)PFC_PFC29) |= (0x0E << 20);
 
 	/* Enable Write protect */
 	(*(volatile u32 *)PFC_PWPR) &= ~(0x1u << 6);
