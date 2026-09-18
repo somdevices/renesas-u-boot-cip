@@ -41,6 +41,22 @@ config RCAR_GEN3
 	imply SPL_USE_TINY_PRINTF
 	imply SPL_YMODEM_SUPPORT
 
+config SOMDEVICES_RZV2N
+	bool "RZ/V2N SOMDEVICES board"
+	select RCAR_64
+	select SUPPORT_SPL
+	select PINCTRL_PFC
+	imply SPL
+	imply SPL_BOARD_INIT
+	imply SPL_GZIP
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_SERIAL
+	imply SPL_SYS_MALLOC_SIMPLE
+	imply SPL_TINY_MEMSET
+	imply SPL_USE_TINY_PRINTF
+	imply SPL_YMODEM_SUPPORT
+
 config RCAR_GEN4
 	bool "Renesas ARM SoCs R-Car Gen4 (64bit)"
 	select RCAR_64
@@ -102,5 +118,6 @@ source "arch/arm/mach-renesas/Kconfig.64"
 source "arch/arm/mach-renesas/Kconfig.rza1"
 source "arch/arm/mach-renesas/Kconfig.rzn1"
 source "arch/arm/mach-renesas/Kconfig.rzg2l"
+source "board/somdevices/rzv2n_somdevices/Kconfig"
 
 endif
