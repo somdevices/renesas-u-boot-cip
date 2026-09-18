@@ -979,6 +979,9 @@ dtb-$(CONFIG_RCAR_GEN3) += \
 	rzv2n-dev.dtb \
 	rzv2n-evk.dtb
 
+dtb-$(CONFIG_SOMDEVICES_RZV2N) += \
+	rzv2n-somdevices.dtb
+
 dtb-$(CONFIG_RCAR_GEN4) += \
 	r8a779h0-gray-hawk.dtb
 
