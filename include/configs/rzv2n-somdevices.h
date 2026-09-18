@@ -3,8 +3,8 @@
  * Copyright (C) 2023 Renesas Electronics Corporation
  */
 
-#ifndef __RZV2N_EVK_H
-#define __RZV2N_EVK_H
+#ifndef __RZV2N_SOMDEVICES_H
+#define __RZV2N_SOMDEVICES_H
 
 #include <asm/arch/renesas.h>
 
@@ -54,14 +54,14 @@
 	"prodsdbootargs=setenv bootargs rw rootwait earlycon root=/dev/mmcblk1p2 \0" \
 	"prodemmcbootargs=setenv bootargs rw rootwait earlycon root=/dev/mmcblk0p2 \0" \
 	"bootimage=booti 0x48080000 - 0x48000000 \0" \
-	"emmcload=ext4load mmc 0:2 0x48080000 boot/Image;ext4load mmc 0:2 0x48000000 boot/r9a09g056n48-rzv2n-evk.dtb;run prodemmcbootargs \0" \
-	"sd1load=ext4load mmc 1:2 0x48080000 boot/Image;ext4load mmc 1:2 0x48000000 boot/r9a09g056n48-rzv2n-evk.dtb;run prodsdbootargs \0" \
+	"emmcload=ext4load mmc 0:2 0x48080000 boot/Image;ext4load mmc 0:2 0x48000000 boot/r9a09g056n44-somdevices-C0P1.dtb;run prodemmcbootargs \0" \
+	"sd1load=ext4load mmc 1:2 0x48080000 boot/Image;ext4load mmc 1:2 0x48000000 boot/r9a09g056n44-somdevices-C0P1.dtb;run prodsdbootargs \0" \
 	"bootcmd_check=if mmc dev 1; then run sd1load; else run emmcload; fi \0"
 
-#define CONFIG_BOOTCOMMAND	"env default -a;run bootcmd_check;run bootimage"
+#define CONFIG_BOOTCOMMAND	"run bootcmd_check;run bootimage"
 
 /* For board */
 /* Ethernet RAVB */
 #define CONFIG_BITBANGMII_MULTI
 
-#endif /* __RZV2N_EVK_H */
+#endif /* __RZV2N_SOMDEVICES_H */
