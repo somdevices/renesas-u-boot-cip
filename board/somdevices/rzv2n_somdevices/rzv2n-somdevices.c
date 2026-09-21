@@ -336,32 +336,40 @@ int set_mac_eeprom(void)
 	struct udevice *dev;
 	u8 buf[6];
 	int ret;
+	/* If ethaddr variable is not set in environment */
+	char ethaddr[18];
+	char *ethaddr_env;
 
-	if (!env_get("ethaddr")) {
-			/* If ethaddr variable is not set in environment */
-			char ethaddr[18];
-			printf("Setting MAC from EEPROM\n");
-			/* Configure EEPROM: 7bit address 0x50 */
-			ret = i2c_get_chip_for_busnum(EEPROM_BUS_NUM, EEPROM_ADDR, EEPROM_ADDR_LEN, &dev);
-			if (ret) {
-					printf("Cannot find EEPROM for MAC: %d\n", ret);
-					return 0;
-			}
-			/* Reading from EEPROM */
-			if (dm_i2c_read(dev, EEPROM_OFFSET, (u8 *)&buf, sizeof(buf)) < 0) {
-					printf("i2c EEPROM for MAC read failed\n");
-					return 0;
-			}
-			sprintf(ethaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
-											buf[0],
-											buf[1],
-											buf[2],
-											buf[3],
-											buf[4],
-											buf[5]);
+	/* Configure EEPROM: 7bit address 0x50 */
+	ret = i2c_get_chip_for_busnum(EEPROM_BUS_NUM, EEPROM_ADDR, EEPROM_ADDR_LEN, &dev);
+	if (ret) {
+		printf("Cannot find EEPROM for MAC: %d\n", ret);
+		return 0;
+	}
+	/* Reading from EEPROM */
+	if (dm_i2c_read(dev, EEPROM_OFFSET, (u8 *)&buf, sizeof(buf)) < 0) {
+		printf("i2c EEPROM for MAC read failed\n");
+		return 0;
+	}
+	sprintf(ethaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
+									buf[0],
+									buf[1],
+									buf[2],
+									buf[3],
+									buf[4],
+									buf[5]);
+	ethaddr_env = env_get("ethaddr");
+	if (!ethaddr_env) {
+		printf("Setting MAC from EEPROM\n");
+		/* Set ethaddr variable for ethernet */
+		env_set("ethaddr", ethaddr);
+		env_save();
+	} else {
+		if (strcmp(ethaddr_env, ethaddr)) {
 			/* Set ethaddr variable for ethernet */
 			env_set("ethaddr", ethaddr);
 			env_save();
+		}
 	}
 	return 0;
 }
