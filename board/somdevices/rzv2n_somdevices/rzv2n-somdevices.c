@@ -94,6 +94,9 @@ DECLARE_GLOBAL_DATA_PTR;
 #define LED_GPIO1 RZG2L_GPIO(0, 0)
 #define LED_GPIO2 RZG2L_GPIO(0, 1)
 
+/* DISPLAY BACKLIGHT */
+#define PWM_GPIO RZG2L_GPIO(10, 7)
+
 /* EEPROM */
 #define EEPROM_BUS_NUM	8
 #define EEPROM_ADDR		0x50
@@ -369,6 +372,10 @@ int board_early_init_f(void)
 	gpio_direction_output(LED_GPIO1, 1);
 	gpio_request(LED_GPIO2, "led2");
 	gpio_direction_output(LED_GPIO2, 1);
+
+	/* Turn on display */
+	gpio_request(PWM_GPIO, "pwm");
+	gpio_direction_output(PWM_GPIO, 1);
 
 	set_mac_eeprom();
 	return 0;
