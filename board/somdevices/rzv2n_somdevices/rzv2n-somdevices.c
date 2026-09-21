@@ -90,6 +90,10 @@ DECLARE_GLOBAL_DATA_PTR;
 /* ADC */
 #define SYS_ADC_CFG			0x10431600
 
+/* HEARTBEAT */
+#define LED_GPIO1 RZG2L_GPIO(0, 0)
+#define LED_GPIO2 RZG2L_GPIO(0, 1)
+
 void s_init(void)
 {
 	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
@@ -320,6 +324,10 @@ pmic_failed:
 
 int board_early_init_f(void)
 {
+	gpio_request(LED_GPIO1, "led1");
+	gpio_direction_output(LED_GPIO1, 1);
+	gpio_request(LED_GPIO2, "led2");
+	gpio_direction_output(LED_GPIO2, 1);
 	return 0;
 }
 
@@ -331,9 +339,7 @@ int board_init(void)
 	board_usb_init();
 
 	/* Initialize PMIC I2C devices */
-#if (CONFIG_TARGET_RZV2N_EVK)
 	board_pmic_i2c_init();
-#endif
 
 	return 0;
 }
