@@ -7,7 +7,7 @@
 #
 
 ifdef CONFIG_SPL_BUILD
-obj-y	:= ../../renesas/rcar-common/gen3-spl.o
+obj-y	:= ../rcar-common/gen3-spl.o
 else
-obj-y	:= rzv2n-somdevices.o ../../renesas/rcar-common/v2-common.o
+obj-y	:= rzv2n-somdevices.o ../rcar-common/v2-common.o
 endif
