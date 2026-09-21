@@ -94,6 +94,12 @@ DECLARE_GLOBAL_DATA_PTR;
 #define LED_GPIO1 RZG2L_GPIO(0, 0)
 #define LED_GPIO2 RZG2L_GPIO(0, 1)
 
+/* EEPROM */
+#define EEPROM_BUS_NUM	8
+#define EEPROM_ADDR		0x50
+#define EEPROM_ADDR_LEN	1
+#define EEPROM_OFFSET	0xFA
+
 void s_init(void)
 {
 	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
@@ -322,12 +328,49 @@ pmic_failed:
 	return;
 }
 
+int set_mac_eeprom(void)
+{
+	struct udevice *dev;
+	u8 buf[6];
+	int ret;
+
+	if (!env_get("ethaddr")) {
+			/* If ethaddr variable is not set in environment */
+			char ethaddr[18];
+			printf("Setting MAC from EEPROM\n");
+			/* Configure EEPROM: 7bit address 0x50 */
+			ret = i2c_get_chip_for_busnum(EEPROM_BUS_NUM, EEPROM_ADDR, EEPROM_ADDR_LEN, &dev);
+			if (ret) {
+					printf("Cannot find EEPROM for MAC: %d\n", ret);
+					return 0;
+			}
+			/* Reading from EEPROM */
+			if (dm_i2c_read(dev, EEPROM_OFFSET, (u8 *)&buf, sizeof(buf)) < 0) {
+					printf("i2c EEPROM for MAC read failed\n");
+					return 0;
+			}
+			sprintf(ethaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
+											buf[0],
+											buf[1],
+											buf[2],
+											buf[3],
+											buf[4],
+											buf[5]);
+			/* Set ethaddr variable for ethernet */
+			env_set("ethaddr", ethaddr);
+			env_save();
+	}
+	return 0;
+}
+
 int board_early_init_f(void)
 {
 	gpio_request(LED_GPIO1, "led1");
 	gpio_direction_output(LED_GPIO1, 1);
 	gpio_request(LED_GPIO2, "led2");
 	gpio_direction_output(LED_GPIO2, 1);
+
+	set_mac_eeprom();
 	return 0;
 }
 
