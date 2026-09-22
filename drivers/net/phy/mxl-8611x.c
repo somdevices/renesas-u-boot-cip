@@ -13,6 +13,7 @@
 
 /* PHY IDs */
 #define PHY_ID_MXL86110		0xC1335580
+#define PHY_ID_MXL86110M	0x4F51E91B
 #define PHY_ID_MXL86111		0xC1335588
 
 /* required to access extended registers */
@@ -35,6 +36,56 @@
 #define MXL8611X_LED0_CFG_REG					0xA00C
 #define MXL8611X_LED1_CFG_REG					0xA00D
 #define MXL8611X_LED2_CFG_REG					0xA00E
+
+/* LED registers and defines */
+#define MXL8611X_LED0_CFG_REG 0xA00C
+#define MXL8611X_LED1_CFG_REG 0xA00D
+#define MXL8611X_LED2_CFG_REG 0xA00E
+
+#define MXL8611X_LEDX_CFG_TRAFFIC_ACT_BLINK_IND		BIT(13)
+#define MXL8611X_LEDX_CFG_LINK_UP_FULL_DUPLEX_ON	BIT(12)
+#define MXL8611X_LEDX_CFG_LINK_UP_HALF_DUPLEX_ON	BIT(11)
+#define MXL8611X_LEDX_CFG_LINK_UP_TX_ACT_ON			BIT(10)
+#define MXL8611X_LEDX_CFG_LINK_UP_RX_ACT_ON			BIT(9)
+#define MXL8611X_LEDX_CFG_LINK_UP_TX_ON				BIT(8)
+#define MXL8611X_LEDX_CFG_LINK_UP_RX_ON				BIT(7)
+#define MXL8611X_LEDX_CFG_LINK_UP_1GB_ON			BIT(6)
+#define MXL8611X_LEDX_CFG_LINK_UP_100MB_ON			BIT(5)
+#define MXL8611X_LEDX_CFG_LINK_UP_10MB_ON			BIT(4)
+#define MXL8611X_LEDX_CFG_LINK_UP_COLLISION			BIT(3)
+#define MXL8611X_LEDX_CFG_LINK_UP_1GB_BLINK			BIT(2)
+#define MXL8611X_LEDX_CFG_LINK_UP_100MB_BLINK		BIT(1)
+#define MXL8611X_LEDX_CFG_LINK_UP_10MB_BLINK		BIT(0)
+
+#define MXL8611X_LED_BLINK_CFG_REG						0xA00F
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE1_2HZ			0
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE1_4HZ			BIT(0)
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE1_8HZ			BIT(1)
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE1_16HZ			(BIT(1) | BIT(0))
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE2_2HZ			0
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE2_4HZ			BIT(2)
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE2_8HZ			BIT(3)
+#define MXL8611X_LED_BLINK_CFG_FREQ_MODE2_16HZ			(BIT(3) | BIT(2))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_50_PERC_ON	0
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_67_PERC_ON	(BIT(4))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_75_PERC_ON	(BIT(5))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_83_PERC_ON	(BIT(5) | BIT(4))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_50_PERC_OFF	(BIT(6))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_33_PERC_ON	(BIT(6) | BIT(4))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_25_PERC_ON	(BIT(6) | BIT(5))
+#define MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_17_PERC_ON	(BIT(6) | BIT(5) | BIT(4))
+
+/* Adjust default LED settings */
+#define MXL8611X_LED0_CFG_CUSTOM		(MXL8611X_LEDX_CFG_TRAFFIC_ACT_BLINK_IND | \
+										MXL8611X_LEDX_CFG_LINK_UP_TX_ACT_ON | \
+										MXL8611X_LEDX_CFG_LINK_UP_RX_ACT_ON | \
+										MXL8611X_LEDX_CFG_LINK_UP_10MB_ON | \
+										MXL8611X_LEDX_CFG_LINK_UP_100MB_ON | \
+										MXL8611X_LEDX_CFG_LINK_UP_1GB_ON)
+#define MXL8611X_LED1_CFG_CUSTOM		MXL8611X_LEDX_CFG_LINK_UP_100MB_ON
+#define MXL8611X_LED2_CFG_CUSTOM		MXL8611X_LEDX_CFG_LINK_UP_1GB_ON
+#define MXL8611X_LED_BLINK_CFG_CUSTOM	(MXL8611X_LED_BLINK_CFG_FREQ_MODE2_16HZ | \
+										MXL8611X_LED_BLINK_CFG_DUTY_CYCLE_33_PERC_ON)
 
 /**
  * struct mxl8611x_cfg_reg_map - map a config value to aregister value
@@ -116,10 +167,6 @@ static int mxl8611x_extwrite(struct phy_device *phydev, int addr,
 
 static int mxl8611x_led_cfg(struct phy_device *phydev)
 {
-	int i;
-	char propname[25];
-	u32 val;
-
 	ofnode node = phy_get_ofnode(phydev);
 	struct ofnode_phandle_args phandle;
 	int ret;
@@ -139,18 +186,27 @@ static int mxl8611x_led_cfg(struct phy_device *phydev)
 	if (!ret && ofnode_valid(phandle.node))
 		node = phandle.node;
 
-	/* Loop through three the LED registers */
-	for (i = 0; i < 3; i++) {
-		/* Read property from device tree */
-		snprintf(propname, 25, "mxl-8611x,led%d_cfg", i);
-		if (ofnode_read_u32(node, propname, &val))
-			continue;
+	/* Write default LED settings. Can be adapted if target platform requires
+	 * different LED behaviour
+	 */
+	ret = mxl8611x_ext_write(phydev, MXL8611X_LED0_CFG_REG,
+									MXL8611X_LED0_CFG_CUSTOM);
+	if (ret < 0)
+		return ret;
 
-		/* Update PHY LED register */
-		mxl8611x_ext_write(phydev, MXL8611X_LED0_CFG_REG + i, val);
-	}
+	ret = mxl8611x_ext_write(phydev, MXL8611X_LED1_CFG_REG,
+									MXL8611X_LED1_CFG_CUSTOM);
+	if (ret < 0)
+		return ret;
 
-	return 0;
+	ret = mxl8611x_ext_write(phydev, MXL8611X_LED2_CFG_REG,
+									MXL8611X_LED2_CFG_CUSTOM);
+	if (ret < 0)
+		return ret;
+
+	ret = mxl8611x_ext_write(phydev, MXL8611X_LED_BLINK_CFG_REG,
+									MXL8611X_LED_BLINK_CFG_CUSTOM);
+	return ret;
 }
 
 static int mxl8611x_rgmii_cfg_of_delay(struct phy_device *phydev, const char *property, int *val)
@@ -289,6 +345,18 @@ static int mxl86111_config(struct phy_device *phydev)
 U_BOOT_PHY_DRIVER(mxl86110) = {
 	.name = "MXL86110",
 	.uid = PHY_ID_MXL86110,
+	.mask = 0xffffffff,
+	.features = PHY_GBIT_FEATURES,
+	.config = mxl86110_config,
+	.startup = genphy_startup,
+	.shutdown = genphy_shutdown,
+	.readext = mxl8611x_extread,
+	.writeext = mxl8611x_extwrite,
+};
+
+U_BOOT_PHY_DRIVER(mxl86110m) = {
+	.name = "MXL86110M",
+	.uid = PHY_ID_MXL86110M,
 	.mask = 0xffffffff,
 	.features = PHY_GBIT_FEATURES,
 	.config = mxl86110_config,
