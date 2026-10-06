@@ -26,6 +26,7 @@
 #include <mmc.h>
 #include <linux/delay.h>
 
+
 DECLARE_GLOBAL_DATA_PTR;
 
 /* PFC */
@@ -43,6 +44,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PFC_PMC29			(PFC_BASE + 0x0229)
 #define PFC_PFC29			(PFC_BASE + 0x04A4)
 #define PFC_OSCBYPS                     (PFC_BASE + 0x3C00)
+
+#define PFC_PM29			(PFC_BASE + 0x0152)
+#define PFC_P29				(PFC_BASE + 0x0029)
+#define PFC_PM26			(PFC_BASE + 0x014C)
+
 
 #define PFC_OEN				(PFC_BASE + 0x3C40)
 #define PFC_OEN_OEN0			BIT(0)
@@ -91,11 +97,11 @@ DECLARE_GLOBAL_DATA_PTR;
 #define SYS_ADC_CFG			0x10431600
 
 /* HEARTBEAT */
-#define LED_GPIO1 RZG2L_GPIO(0, 0)
-#define LED_GPIO2 RZG2L_GPIO(0, 1)
+#define LED_GPIO1 0
+#define LED_GPIO2 1
 
 /* DISPLAY BACKLIGHT */
-#define PWM_GPIO RZG2L_GPIO(10, 7)
+//#define PWM_GPIO 87//RZG2L_GPIO(10, 7)
 
 /* EEPROM */
 #define EEPROM_BUS_NUM	8
@@ -382,8 +388,8 @@ int board_early_init_f(void)
 	gpio_direction_output(LED_GPIO2, 1);
 
 	/* Turn on display */
-	gpio_request(PWM_GPIO, "pwm");
-	gpio_direction_output(PWM_GPIO, 1);
+	//gpio_request(PWM_GPIO, "pwm");
+	//gpio_direction_output(PWM_GPIO, 1);
 
 	set_mac_eeprom();
 	return 0;
