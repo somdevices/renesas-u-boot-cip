@@ -26,7 +26,6 @@
 #include <mmc.h>
 #include <linux/delay.h>
 
-
 DECLARE_GLOBAL_DATA_PTR;
 
 /* PFC */
@@ -44,11 +43,6 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PFC_PMC29			(PFC_BASE + 0x0229)
 #define PFC_PFC29			(PFC_BASE + 0x04A4)
 #define PFC_OSCBYPS                     (PFC_BASE + 0x3C00)
-
-#define PFC_PM29			(PFC_BASE + 0x0152)
-#define PFC_P29				(PFC_BASE + 0x0029)
-#define PFC_PM26			(PFC_BASE + 0x014C)
-
 
 #define PFC_OEN				(PFC_BASE + 0x3C40)
 #define PFC_OEN_OEN0			BIT(0)
@@ -96,27 +90,24 @@ DECLARE_GLOBAL_DATA_PTR;
 /* ADC */
 #define SYS_ADC_CFG			0x10431600
 
-/* HEARTBEAT */
-#define LED_GPIO1 0
-#define LED_GPIO2 1
-
-/* DISPLAY BACKLIGHT */
-//#define PWM_GPIO 87//RZG2L_GPIO(10, 7)
-
-/* EEPROM */
-#define EEPROM_BUS_NUM	8
-#define EEPROM_ADDR		0x50
-#define EEPROM_ADDR_LEN	1
-#define EEPROM_OFFSET	0xFA
-
 void s_init(void)
 {
 	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
 
+#if CONFIG_TARGET_RZV2N_DEV
+	/* PA5,PA4 port	*/
+	*(volatile u8 *)PMC_2A   &= ~(0x03 << 4);
+	/* PA5=1,PA4=0 */
+	*(volatile u8 *)P_2A      = (*(volatile u32 *)P_2A  & ~(0x03 << 4)) | (0x01 << 5);
+	/* PA5,PA4 output */
+	*(volatile u16 *)PM_2A    = (*(volatile u32 *)PM_2A & ~(0x0f << 8)) | (0x0c << 8);
+#endif
+#if CONFIG_TARGET_RZV2N_EVK
 	/* SD1  */
 	*(volatile u8 *)PMC_2A   &= ~(0x03 << 2);/* PA3,PA2 port */
 	*(volatile u8 *)P_2A      = (*(volatile u32 *)P_2A  & ~(0x03<<2)) | (0x01 <<3); /* PA3=1,PA2=0		*/
 	*(volatile u16 *)PM_2A    = (*(volatile u32 *)PM_2A & ~(0x0f<<4)) | (0x0a <<4); /* PA3,PA2 output	*/
+#endif
 	/* I2C8 */
 	*(volatile u32 *)PFC_20  = (*(volatile u32 *)PFC_20 & 0x00FFFFFF) | (0x01 << 28) | (0x01 << 24);
 	*(volatile u8 *)PMC_20   |= (0x03) << 6;	/* P07,P06 multiplexed function	*/
@@ -140,37 +131,14 @@ void s_init(void)
 	*(volatile u32 *)(ICU_IPTSR_REG) = 0;
 
 	/* Reset ETH0 */
-	/* Set P9_6 as ETH0 reset GPIO */
-	/* Control mode (GPIO function) */
-	(*(volatile u32 *)PFC_PMC29) &= ~(0x1u << 6);
+	*(volatile u32 *)(CPG_RESET_ETH) = 0x00010000;
+	while ((*(volatile u32 *)(CPG_RESETMON_ETH) & 0x00000002) == 0x0)
+		;
 
-	/* Set PM register for Output */
-	(*(volatile u32 *)PFC_PM29) &= ~(0x3u << 12);
-
-	/* Drive RESET LOW (Assert Ethernet PHY Reset) */
-	(*(volatile u32 *)PFC_P29) &= ~(0x1u << 6);
-
-	/* Hold in reset (e.g., 10-50 ms) */
-	mdelay(20);
-
-	/* Drive RESET HIGH (De-assert Ethernet PHY Reset) */
-	(*(volatile u32 *)PFC_P29) |= (0x1u << 6);
-
-	/* Set P6_1 as ETH1 reset GPIO */
-	/* Control mode (GPIO function) */
-	(*(volatile u32 *)PFC_PMC26) &= ~(0x1u << 1);
-
-	/* Set PM register for Output */
-	(*(volatile u32 *)PFC_PM26) &= ~(0x3u << 2);
-
-	/* Drive RESET LOW (Assert Ethernet PHY Reset) */
-	(*(volatile u32 *)PFC_P29) &= ~(0x1u << 1);
-
-	/* Hold in reset (e.g., 10-50 ms) */
-	mdelay(20);
-
-	/* Drive RESET HIGH (De-assert Ethernet PHY Reset) */
-	(*(volatile u32 *)PFC_P29) |= (0x1u << 1);
+	/* Release reset ETH0 */
+	*(volatile u32 *)(CPG_RESET_ETH) = 0x00010001;
+	while ((*(volatile u32 *)(CPG_RESETMON_ETH) & 0x00000002) != 0x0)
+		;
 
 	/* Disable SMUX2_GBE0_RXCLK and SMUX2_GBE1_RXCLK */
 	*(volatile u32 *) (CPG_SSEL0) = 0x10000000;
@@ -235,18 +203,36 @@ static void board_usb_init(void)
 	/* Disable GPIO Write Protect */
 	(*(volatile u32 *)PFC_PWPR) |= (0x1u << 6);
 
+#if CONFIG_TARGET_RZV2N_DEV
 	/* Set P6_0 as Func.15 for VBUSEN */
 	(*(volatile u32 *)PFC_PMC26) |= (0x1u << 0);
 	(*(volatile u32 *)PFC_PFC26) &= ~(0xF << 0);
 	/* Function mode 15 */
 	(*(volatile u32 *)PFC_PFC26) |= (0xF << 0);
 
-	/* Set P9_5 as Func.14 for VBUSEN */
-	/* Control mode (multiplexed function) */
-	(*(volatile u32 *)PFC_PMC29) |= (0x1u << 5);
-	(*(volatile u32 *)PFC_PFC29) &= ~(0xF << 20);
-	/* Function mode 14 */
-	(*(volatile u32 *)PFC_PFC29) |= (0x0E << 20);
+	/* Set P6_1 as Func.15 for OVRCUR */
+	(*(volatile u32 *)PFC_PMC26) |= (0x1u << 1);
+	(*(volatile u32 *)PFC_PFC26) &= ~(0xF << 4);
+	/* Function mode 15 */
+	(*(volatile u32 *)PFC_PFC26) |= (0xF << 4);
+#endif /* CONFIG_TARGET_RZV2N_DEV */
+
+#if CONFIG_TARGET_RZV2N_EVK
+        /* Set P9_5 as Func.14 for VBUSEN */
+        /* Control mode (multiplexed function) */
+        (*(volatile u32 *)PFC_PMC29) |= (0x1u << 5);
+        (*(volatile u32 *)PFC_PFC29) &= ~(0xF << 20);
+        /* Function mode 14 */
+        (*(volatile u32 *)PFC_PFC29) |= (0x0E << 20);
+
+        /* Set P9_6 as Func.14 for OVRCUR */
+        /* Control mode (multiplexed function) */
+        (*(volatile u32 *)PFC_PMC29) |= (0x1u << 6);
+        (*(volatile u32 *)PFC_PFC29) &= ~(0xF << 24);
+        /* Function mode 14 */
+        (*(volatile u32 *)PFC_PFC29) |= (0x0E << 24);
+
+#endif /* CONFIG_TARGET_RZV2N_EVK */
 
 	/* Enable Write protect */
 	(*(volatile u32 *)PFC_PWPR) &= ~(0x1u << 6);
@@ -264,134 +250,13 @@ static void board_usb_init(void)
 	(*(volatile u32 *)(USB20_BASE + HcRhDescriptorA)) |= (0x1u << 12);
 }
 
-static void board_pmic_i2c_check_val(struct udevice *dev, u8 reg_addr, u8 reg_val)
-{
-	u8 read_val;
-
-	/* Read back the value from register */
-	if (dm_i2c_read(dev, reg_addr, &read_val, 1)) {
-		printf("Error: Failed to read back value from register 0x%x\n", reg_addr);
-		return;
-	}
-
-	/* Check if the value was written correctly */
-	if (read_val != reg_val)
-		printf("Error: Written value was not correctly at register 0x%x\n", reg_addr);
-}
-
 int board_late_init(void)
 {
-	struct udevice *dev;
-	const u8 pmic_i2c_bus = 8;
-	u8 reg;
-	int ret;
-
-	ret = i2c_get_chip_for_busnum(pmic_i2c_bus, 0x12, 1, &dev);
-
-	if (!ret)
-	{
-		dm_i2c_read(dev, 0x2E, &reg, 1);
-		reg &= (~0x01);
-
-		dm_i2c_write(dev, 0x2E, &reg, 1);
-
-		udelay(2);
-		reg |= (0x01);
-
-		dm_i2c_write(dev, 0x2E, &reg, 1);
-	}
-
-	return ret;
-}
-
-
-static void board_pmic_i2c_init(void)
-{
-	struct udevice *bus, *dev;
-	int ret;
-	u8 reg_addr, reg_val;
-
-	/* Get the I2C bus */
-	ret = uclass_get_device_by_seq(UCLASS_I2C, 8, &bus);
-	if (ret)
-		goto pmic_failed;
-
-	/* Initialize I2C device at address 0x6f */
-	ret = dm_i2c_probe(bus, 0x6f, 0, &dev);
-	if (ret)
-		goto pmic_failed;
-
-	/* Write 0x00 to register 0x24 of device 0x6f */
-	reg_addr = 0x24;
-	reg_val = 0x00;
-	ret = dm_i2c_write(dev, reg_addr, &reg_val, 1);
-	if (ret)
-		goto pmic_failed;
-
-	board_pmic_i2c_check_val(dev, reg_addr, reg_val);
-
-	return;
-
-pmic_failed:
-	printf("Can not initialize PMIC settings via I2C8\n");
-	return;
-}
-
-int set_mac_eeprom(void)
-{
-	struct udevice *dev;
-	u8 buf[6];
-	int ret;
-	/* If ethaddr variable is not set in environment */
-	char ethaddr[18];
-	char *ethaddr_env;
-
-	/* Configure EEPROM: 7bit address 0x50 */
-	ret = i2c_get_chip_for_busnum(EEPROM_BUS_NUM, EEPROM_ADDR, EEPROM_ADDR_LEN, &dev);
-	if (ret) {
-		printf("Cannot find EEPROM for MAC: %d\n", ret);
-		return 0;
-	}
-	/* Reading from EEPROM */
-	if (dm_i2c_read(dev, EEPROM_OFFSET, (u8 *)&buf, sizeof(buf)) < 0) {
-		printf("i2c EEPROM for MAC read failed\n");
-		return 0;
-	}
-	sprintf(ethaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
-									buf[0],
-									buf[1],
-									buf[2],
-									buf[3],
-									buf[4],
-									buf[5]);
-	ethaddr_env = env_get("ethaddr");
-	if (!ethaddr_env) {
-		printf("Setting MAC from EEPROM\n");
-		/* Set ethaddr variable for ethernet */
-		env_set("ethaddr", ethaddr);
-		env_save();
-	} else {
-		if (strcmp(ethaddr_env, ethaddr)) {
-			/* Set ethaddr variable for ethernet */
-			env_set("ethaddr", ethaddr);
-			env_save();
-		}
-	}
 	return 0;
 }
 
 int board_early_init_f(void)
 {
-	gpio_request(LED_GPIO1, "led1");
-	gpio_direction_output(LED_GPIO1, 1);
-	gpio_request(LED_GPIO2, "led2");
-	gpio_direction_output(LED_GPIO2, 1);
-
-	/* Turn on display */
-	//gpio_request(PWM_GPIO, "pwm");
-	//gpio_direction_output(PWM_GPIO, 1);
-
-	set_mac_eeprom();
 	return 0;
 }
 
@@ -401,9 +266,6 @@ int board_init(void)
 	gd->bd->bi_boot_params = CONFIG_TEXT_BASE + 0x50000;
 
 	board_usb_init();
-
-	/* Initialize PMIC I2C devices */
-	board_pmic_i2c_init();
 
 	return 0;
 }
