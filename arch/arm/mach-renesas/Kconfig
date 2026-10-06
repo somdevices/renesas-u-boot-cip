@@ -118,6 +118,6 @@ source "arch/arm/mach-renesas/Kconfig.64"
 source "arch/arm/mach-renesas/Kconfig.rza1"
 source "arch/arm/mach-renesas/Kconfig.rzn1"
 source "arch/arm/mach-renesas/Kconfig.rzg2l"
-source "board/somdevices/rzv2n_somdevices/Kconfig"
+source "board/somdevices/rzv2n-somdevices/Kconfig"
 
 endif
