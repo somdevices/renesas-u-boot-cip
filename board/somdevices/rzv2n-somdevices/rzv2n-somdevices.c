@@ -48,6 +48,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define PFC_OEN_OEN0			BIT(0)
 #define PFC_OEN_OEN1			BIT(1)
 
+#define P_20				(PFC_BASE + 0x0020)
+#define PM_20				(PFC_BASE + 0x0140)
 #define	PMC_20				(PFC_BASE + 0x0220)
 #define	PFC_20				(PFC_BASE + 0x0480)
 #define PFC_PWPR                        (PFC_BASE + 0x3C04)
@@ -99,6 +101,14 @@ DECLARE_GLOBAL_DATA_PTR;
 void s_init(void)
 {
 	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
+
+	/* --- Turn ON LEDs on P00 and P01 --- */
+	/* P00,P01 port	*/
+	*(volatile u8 *)PMC_20 &= ~(0x03);
+	/* P00=1,P01=1 */
+	*(volatile u8 *)P_20 |= (0x03);
+	/* P00,P01 output */
+	*(volatile u16 *)PM_20 = (*(volatile u32 *)PM_20 & ~0x0F) | 0x0A;
 
 #if CONFIG_TARGET_RZV2N_DEV
 	/* PA5,PA4 port	*/
