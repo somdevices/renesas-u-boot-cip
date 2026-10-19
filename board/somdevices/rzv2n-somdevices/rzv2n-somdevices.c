@@ -310,6 +310,37 @@ int board_init(void)
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = CONFIG_TEXT_BASE + 0x50000;
 
+	/* -------------------------------------------------------------
+	 * SD Card (SD1) Power Initialization & Hard Reset Sequence
+	 * Pin PA3 = SD1_PWR (1 = Power ON, 0 = Power OFF)
+	 * Pin PA2 = SD1IOVS (0 = 3.3V mode, 1 = 1.8V mode)
+	 * ------------------------------------------------------------- */
+
+	/* Unlock PFC register write protection */
+	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
+
+	/* 1. Set PA2 and PA3 to GPIO mode in PMC_2A */
+	*(volatile u8 *)PMC_2A &= ~(0x03 << 2);
+
+	/* 2. Set PA2 and PA3 pin directions to OUTPUT in PM_2A */
+	*(volatile u16 *)PM_2A = (*(volatile u32 *)PM_2A & ~(0x0f << 4)) | (0x0a << 4);
+
+	/* 3. Force Power OFF (PA3 = 0) and set 3.3V mode (PA2 = 0) */
+	*(volatile u8 *)P_2A &= ~(0x03 << 2);
+
+	/* Re-lock PFC register write protection while waiting */
+	*(volatile u32 *)PWPR &= ~(PWPR_REGWE_A | PWPR_REGWE_B);
+
+	/* Wait 100ms to completely discharge card slot capacitors */
+	mdelay(100);
+
+	/* 4. Turn Power ON (PA3 = 1) while remaining in 3.3V mode (PA2 = 0) */
+	*(volatile u32 *)PWPR |= (PWPR_REGWE_A | PWPR_REGWE_B);
+	*(volatile u8 *)P_2A = (*(volatile u32 *)P_2A & ~(0x03 << 2)) | (0x01 << 3);
+	*(volatile u32 *)PWPR &= ~(PWPR_REGWE_A | PWPR_REGWE_B);
+
+	/* Wait 50ms for SD card power rail to stabilize before probing */
+	mdelay(50);
 	board_usb_init();
 
 	return 0;
