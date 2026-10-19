@@ -532,18 +532,9 @@
 		phy0: ethernet-phy@1 {
 			compatible = "ethernet-phy-ieee802.3-c22";
 			reg = <1>;
-			rxc-skew-psec = <1400>;
-			txc-skew-psec = <1400>;
-			rxdv-skew-psec = <0>;
-			txdv-skew-psec = <0>;
-			rxd0-skew-psec = <0>;
-			rxd1-skew-psec = <0>;
-			rxd2-skew-psec = <0>;
-			rxd3-skew-psec = <0>;
-			txd0-skew-psec = <0>;
-			txd1-skew-psec = <0>;
-			txd2-skew-psec = <0>;
-			txd3-skew-psec = <0>;
+			mxl-8611x,rx-internal-delay-ps = <1500>;
+			mxl-8611x,tx-internal-delay-ps-1g = <1500>;
+			mxl-8611x,tx-internal-delay-ps-100m = <1500>;
 		};
 	};
 };
@@ -562,18 +553,9 @@
 		phy1: ethernet-phy@2 {
 			compatible = "ethernet-phy-ieee802.3-c22";
 			reg = <2>;
-			rxc-skew-psec = <1400>;
-			txc-skew-psec = <1400>;
-			rxdv-skew-psec = <0>;
-			txdv-skew-psec = <0>;
-			rxd0-skew-psec = <0>;
-			rxd1-skew-psec = <0>;
-			rxd2-skew-psec = <0>;
-			rxd3-skew-psec = <0>;
-			txd0-skew-psec = <0>;
-			txd1-skew-psec = <0>;
-			txd2-skew-psec = <0>;
-			txd3-skew-psec = <0>;
+			mxl-8611x,rx-internal-delay-ps = <1500>;
+			mxl-8611x,tx-internal-delay-ps-1g = <1500>;
+			mxl-8611x,tx-internal-delay-ps-100m = <1500>;
 		};
 	};
 };
