@@ -63,9 +63,33 @@
 	"bootimage=booti 0x48080000 - 0x48000000 \0" \
 	"emmcload=ext4load mmc 0:2 0x48080000 boot/Image;ext4load mmc 0:2 0x48000000 boot/r9a09g056n44-somdevices-C0P1.dtb;run prodemmcbootargs \0" \
 	"sd1load=ext4load mmc 1:2 0x48080000 boot/Image;ext4load mmc 1:2 0x48000000 boot/r9a09g056n44-somdevices-C0P1.dtb;run prodsdbootargs \0" \
-	"bootcmd_check=if mmc dev 1; then run sd1load; else run emmcload; fi \0"
+	"loadsdbootscript=ext4load mmc 1:2 0x48080000 boot/boot.scr;\0" \
+	"loademmcbootscript=ext4load mmc 0:2 0x48080000 boot/boot.scr;\0" \
+	"bootemmc= " \
+		"if run loademmcbootscript; then " \
+			"echo Running bootscript from mmc; " \
+		"else " \
+			"echo Booting from mmc; " \
+			"run emmcload; " \
+			"run bootimage; " \
+		"fi;\0" \
+	"bootcmd_check= " \
+		"if mmc dev 1; then " \
+			"if run loadsdbootscript; then " \
+				"echo Running bootscript from sd; " \
+			"else " \
+				"if run sd1load; then " \
+					"echo Booting from sd; " \
+					"run bootimage; " \
+				"else " \
+					"run bootemmc; "\
+				"fi; " \
+			"fi; " \
+		"else " \
+			"run bootemmc; "\
+		"fi;\0"
 
-#define CONFIG_BOOTCOMMAND	"run bootcmd_check;run bootimage"
+#define CONFIG_BOOTCOMMAND	"run bootcmd_check"
 
 /* For board */
 /* Ethernet RAVB */
