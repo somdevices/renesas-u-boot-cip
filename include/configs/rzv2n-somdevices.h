@@ -65,8 +65,8 @@
 	"ocabin=OpenCV_Bin.bin \0"  \
 	"codaddr=0xAFD00000 \0"     \
 	"codbin=Codec_Bin.bin \0"   \
-	"emmcload=ext4load mmc 0:1 ${ocaaddr} boot/${ocabin}; ext4load mmc 0:1 ${codaddr} boot/${codbin};ext4load mmc 0:1 0x48080000 boot/Image;ext4load mmc 0:1 0x48000000 boot/r9a09g056n44-somdevices-C0P1.dtb;run prodemmcbootargs \0" \
-	"sd1load=ext4load mmc 1:2 ${ocaaddr} boot/${ocabin}; ext4load mmc 1:2 ${codaddr} boot/${codbin};ext4load mmc 1:2 0x48080000 boot/Image;ext4load mmc 1:2 0x48000000 boot/r9a09g056n44-somdevices-C0P1.dtb;run prodsdbootargs \0" \
+	"emmcload=ext4load mmc 0:1 ${ocaaddr} boot/${ocabin}; ext4load mmc 0:1 ${codaddr} boot/${codbin};ext4load mmc 0:1 0x48080000 boot/Image;ext4load mmc 0:1 0x48000000 boot/r9a09g056n48-somdevices-C0P1.dtb;run prodemmcbootargs \0" \
+	"sd1load=ext4load mmc 1:2 ${ocaaddr} boot/${ocabin}; ext4load mmc 1:2 ${codaddr} boot/${codbin};ext4load mmc 1:2 0x48080000 boot/Image;ext4load mmc 1:2 0x48000000 boot/r9a09g056n48-somdevices-C0P1.dtb;run prodsdbootargs \0" \
 	"loadsdbootscript=ext4load mmc 1:2 0x48080000 boot/boot.scr;\0" \
 	"loademmcbootscript=ext4load mmc 0:1 0x48080000 boot/boot.scr;\0" \
 	"bootemmc= " \
